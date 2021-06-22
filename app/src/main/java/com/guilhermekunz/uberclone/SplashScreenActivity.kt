@@ -104,18 +104,26 @@ class SplashScreenActivity : AppCompatActivity() {
                         .show()
                 }
 
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.exists()) {
-                        Toast.makeText(
-                            this@SplashScreenActivity,
-                            "User already register!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.exists()) {
+//                        Toast.makeText(
+//                            this@SplashScreenActivity,
+//                            "User already register!",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+                        val model = dataSnapshot.getValue(DriverInfoModel::class.java)
+                        goToHomeActivity(model)
                     } else {
                         showRegisterLayout()
                     }
                 }
             })
+    }
+
+    private fun goToHomeActivity(model: DriverInfoModel?) {
+        Common.currentUser = model
+        startActivity(Intent(this,DriverHomeActivity::class.java))
+        finish()
     }
 
     private fun showRegisterLayout() {
@@ -169,14 +177,14 @@ class SplashScreenActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
                 else -> {
-                    val driverInfoModel = DriverInfoModel()
-                    driverInfoModel.firstName = edtFirstName.text.toString()
-                    driverInfoModel.lastName = edtLastName.text.toString()
-                    driverInfoModel.phoneNumber = edtPhoneNumber.text.toString()
-                    driverInfoModel.rating = 0.0
+                    val model = DriverInfoModel()
+                    model.firstName = edtFirstName.text.toString()
+                    model.lastName = edtLastName.text.toString()
+                    model.phoneNumber = edtPhoneNumber.text.toString()
+                    model.rating = 0.0
 
                     driverInfoRef.child(FirebaseAuth.getInstance().currentUser!!.uid)
-                        .setValue(driverInfoModel)
+                        .setValue(model)
                         .addOnFailureListener { e ->
                             Toast.makeText(
                                 this@SplashScreenActivity,
@@ -193,6 +201,9 @@ class SplashScreenActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
                             dialog.dismiss()
+
+                            goToHomeActivity(model)
+
                             progress_bar.visibility = View.GONE
                         }
                 }
