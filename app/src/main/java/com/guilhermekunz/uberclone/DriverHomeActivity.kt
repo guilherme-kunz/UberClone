@@ -1,9 +1,13 @@
 package com.guilhermekunz.uberclone
 
+import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
+import android.view.View
+import android.view.WindowInsetsAnimationController
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -13,10 +17,17 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import org.w3c.dom.Text
+import java.lang.StringBuilder
 
 class DriverHomeActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
+    private lateinit var navView: NavigationView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,18 +35,57 @@ class DriverHomeActivity : AppCompatActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        val navView: NavigationView = findViewById(R.id.nav_view)
-        val navController = findNavController(R.id.nav_host_fragment)
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+        navController = findNavController(R.id.nav_host_fragment)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
+                R.id.nav_home
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        init()
+    }
+
+    private fun init() {
+        navView.setNavigationItemSelectedListener { it ->
+            if (it.itemId == R.id.nav_sign_out) {
+                val builder = AlertDialog.Builder(this@DriverHomeActivity)
+                builder.setTitle("Sign out")
+                    .setMessage("Do you really want to sign out?")
+                    .setNegativeButton("CANCEL") { DialogInterface, _ -> DialogInterface.dismiss() }
+                    .setPositiveButton("SIGN OUT") { _, _ ->
+                        FirebaseAuth.getInstance().signOut()
+                        val intent =
+                            Intent(this@DriverHomeActivity, SplashScreenActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    }.setCancelable(false)
+                val dialog = builder.create()
+                dialog.setOnShowListener{
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        .setTextColor(resources.getColor(android.R.color.holo_red_dark))
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                        .setTextColor(resources.getColor(android.R.color.black))
+                }
+                dialog.show()
+            }
+            true
+        }
+
+        val headerView = navView.getHeaderView(0)
+        val txt_name = headerView.findViewById<View>(R.id.txt_name) as TextView
+        val txt_phone = headerView.findViewById<View>(R.id.txt_phone) as TextView
+        val txt_star = headerView.findViewById<View>(R.id.txt_star) as TextView
+
+        txt_name.setText(Common.buildWelcomeMessage())
+        txt_phone.setText(Common.currentUser!!.phoneNumber)
+        txt_star.setText(StringBuilder().append(Common.currentUser!!.rating))
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
