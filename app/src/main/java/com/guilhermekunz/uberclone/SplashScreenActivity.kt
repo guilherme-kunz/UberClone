@@ -19,7 +19,10 @@ import com.firebase.ui.auth.IdpResponse
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.iid.FirebaseInstanceIdReceiver
+import com.google.firebase.iid.internal.FirebaseInstanceIdInternal
 import com.guilhermekunz.uberclone.Model.DriverInfoModel
+import com.guilhermekunz.uberclone.Utils.UserUtils
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.activity_splash_screen.*
@@ -79,9 +82,16 @@ class SplashScreenActivity : AppCompatActivity() {
         listener = FirebaseAuth.AuthStateListener { myFireBaseAuth ->
             val user = myFireBaseAuth.currentUser
             if (user != null) {
+                FirebaseInstanceId.getInstance()
+                    .instanceId
+                    .addOnFailureListener{ e-> Toast.makeText(this@SplashScreenActivity,
+                e.message,Toast.LENGTH_LONG).show()}
+                    .addOnSuccesListener { instanceIdResult ->
+                        {
+                            Log.d("TOKEN",instanceIdResult.token)
+                            UserUtils.updateToken(this@SplashScreenActivity, instanceIdResult.token) }
+                    }
                 checkUserFromFirebase()
-//                startActivity((Intent(this, HomeActivity::class.java)))
-//                finish()
             } else {
                 showLoginLayout()
             }
